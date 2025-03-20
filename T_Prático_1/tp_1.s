@@ -1,4 +1,4 @@
-    .equ STACK_SIZE, 64 ; depois ver se é 64 ou não
+    .equ STACK_SIZE, 64 ; Depois ver se é 64 ou não!
     
     .text
     b   program
