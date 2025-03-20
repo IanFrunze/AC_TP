@@ -14,7 +14,7 @@ if:
 	mov r3,#0
 	cmp r0,r2
 	beq if_end
-	comp r0,r1
+	cmp r0,r1
 	bhs while
 	mov r3,r0
 	mov r0,r1
@@ -27,5 +27,5 @@ while:
 	sub	r1, r1, #1
 	b	while
 while_end:
-if:end:
+if_end:
 	b	.
