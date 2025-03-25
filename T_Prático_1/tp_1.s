@@ -10,8 +10,6 @@ program:
 stack_top_addr:
     .word stack_top
 
-main:
-
 /*
 uint32_t umull32 ( uint32_t M , uint32_t m ) {
     int64_t M_ext = M;
@@ -83,6 +81,43 @@ umull32_for_cond:
     cmp     r6, r9 ; i < 32
     blo     umull32_for
     b .
+
+/*
+void srand( uint32_t nseed ) {
+    seed = nseed;
+ }
+*/
+
+srand:
+
+/*
+uint16_t rand( void ) {
+    seed = ( umull32( seed , 214013 ) + 2531011 ) % RAND_MAX;
+    return ( seed >> 16 );
+}
+*/
+
+rand:
+
+/*
+int main( void ) {
+    uint8_t error = 0;
+    uint16_t rand_number;
+    uint16_t i;
+    srand( 5423 );
+    for( i = 0; error == 0 && i < N; i++ ) {
+        rand_number = rand();
+        if( rand_number != result[i] ) {
+            error = 1;
+        }
+    }
+    return 0;
+}
+*/
+
+main:
+
+
 
     .data; Variáveis globais
 result:
