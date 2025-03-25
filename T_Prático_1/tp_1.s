@@ -10,23 +10,6 @@ program:
 stack_top_addr:
     .word stack_top
 
-/*
-uint32_t umull32 ( uint32_t M , uint32_t m ) {
-    int64_t M_ext = M;
-    int64_t p = m;
-    uint8_t p_1 = 0;
-    for ( uint16_t i = 0; i < 32; i ++ ) {
-        if ( ( p & 0x1 ) == 0 && p_1 == 1 ) {
-            p += M_ext << 32;
-        } else if ( ( p & 0x1 ) == 1 && p_1 == 0 ) {
-            p -= M_ext << 32;
-        }
-        p_1 = p & 0x1;
-        p >>= 1;
-    }
-    return p;
-}
-*/
 
 umull32:
     ; 32 bits menor peso do M_ext:
@@ -80,12 +63,16 @@ umull32_if_end:
 umull32_for_cond:
     cmp     r6, r9 ; i < 32
     blo     umull32_for
+umull32_ret:
+    mov     r0, r2
+    mov     r1,r3
+    mov     pc,lr
     b .
 
 /*
 void srand( uint32_t nseed ) {
     seed = nseed;
- }
+}
 */
 
 srand:
@@ -96,9 +83,51 @@ uint16_t rand( void ) {
     return ( seed >> 16 );
 }
 */
-
 rand:
-
+    ldr     r0,seed0_addr
+    ldr     r0,[r0]
+    ldr     r1,seed1_addr
+    ldr     r1,[r1]
+    ; umull32(seed,214013) está em r0 e r
+    mov     r2,#0xFD
+    movt    r2,#0x43
+    mov     r3,#0x03
+    push    lr
+    bl       umull32
+    pop     lr
+    ; (umull32(seed,214013) + 2531011)
+    mov     r2,#0xC3
+    movt    r2,#0x9E
+    mov     r3,#0x26
+    add     r0,r0,r2
+    adc     r1,r1,r3
+    ; ..% RAND_MAX
+    for_init:
+    mov     r2, #0xFF
+    movt    r2, #0xFF
+    mov     r3, #0
+    b       for_cond
+    for:
+    sub     r0,r0,r2
+    sbc     r1,r1,r3
+    for_cond:
+    cmp     r0,r2
+    sbc     r4,r1,r3
+    bhs     for
+    ; seed = ...
+    mov     r4,sp
+    ldr     r5,seed0_addr
+    ldr     sp,[r5]
+    pop     r5
+    pop     r5
+    mov     r7,r0
+    push    r1
+    push    r0
+    mov     sp,r4
+    ;seed >> 16
+    mov     r0,r7
+    mov     pc,lr
+    b .
 /*
 int main( void ) {
     uint8_t error = 0;
@@ -157,10 +186,9 @@ main_for_end:
 
     .data; Variáveis globais
 result:
-    .word 17747, 2055, 3664, 15611, 9816 ; result[N]
-seed:
-    .word 1, 0; seed
-
+    .word 17747, 2055, 3664, 15611, 9816; result[N]
+seed0:  .word 1; 16..0
+seed1:  .word 0; 32..16
     .stack
     .space  STACK_SIZE
 stack_top:
