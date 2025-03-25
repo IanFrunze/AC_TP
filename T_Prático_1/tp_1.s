@@ -46,7 +46,7 @@ umull32_for_init:
 umull32_for:
 umull32_if:
     ; cond
-    mov     r7,#1
+    mov     r7, #1 ; r7 = p_1
     and     r10, r2, r7 ; p and 0x1
     bzc     umull32_else_if
     cmp     r7, r8 ; p_1 == 1
@@ -116,12 +116,48 @@ int main( void ) {
 */
 
 main:
+    push    lr
+    push    r0 ; error
+    push    r1 ; rand_number
+    push    r2 ; i
+    push    r3 ; N
+    mov     r4, 0x152F
+    mov     r5, 0x0000
+    bl      srand
+main_for_init:
+    mov     r0, #0 ; error = 0
+    mov     r2, #0 ; i = 0
+    b       main_for_cond
+main_for:
+    ; como meter retorno do rand() no rand_number?
+    bl       rand
+;
+main_if:
 
-
+main_if_cond:
+    cmp     r1, ; ?
+    beq     main_if     
+main_if_end:
+    mov     r0, #1
+;
+main_for_cond:
+    cmp     r3, r2
+    bzc     main_for_end
+    and     r0, r0, r0
+    bzc     main_for_end
+    add     r2, r2, #1 ; i++
+    blo     main_for
+main_for_end:
+    pop     r3
+    pop     r2
+    pop     r1
+    pop     r0
+    pop     pc
+    b .
 
     .data; Variáveis globais
 result:
-    .word 17747, 2055, 3664, 15611, 9816; result[N]
+    .word 17747, 2055, 3664, 15611, 9816 ; result[N]
 seed:
     .word 1, 0; seed
 
