@@ -128,6 +128,7 @@ loopDivide_cond:
 rand_ret:
     mov     pc,lr
     b .
+
 main:
     push    lr
     push    r0 ; error
