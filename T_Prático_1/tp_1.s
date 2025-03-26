@@ -20,6 +20,13 @@ umull32:
     ; 32 bits maior peso do p:
     ; r4 p 48..32 
     ; r5 p 64..48
+    push    r4
+    push    r5
+    push    r6
+    push    r7
+    push    r8
+    push    r9
+    push    r10
     mov     r8, #0 ; p_1
 umull32_for_init:
     mov     r9, #32
@@ -66,8 +73,14 @@ umull32_for_cond:
 umull32_ret:
     mov     r0, r2
     mov     r1,r3
+    pop    r10
+    pop    r9
+    pop    r8
+    pop    r7
+    pop    r6
+    pop    r5
+    pop    r4
     mov     pc,lr
-    b .
 
 srand:
     ; r0 e r1 -> nseed
@@ -83,6 +96,8 @@ srand_ret:
     mov     pc,lr
 
 rand:
+    push    r4
+    push    r5
     ldr     r0, seed0_addr
     ldr     r0, [r0]
     ldr     r1, seed1_addr
@@ -119,13 +134,15 @@ loopDivide_cond:
     ldr     sp, [r5]
     pop     r5
     pop     r5
-    mov     r7, r0
+    mov     r5, r0
     push    r1
     push    r0
     mov     sp, r4
     ;seed >> 16
-    mov     r0,r7
+    mov     r0,r5
 rand_ret:
+    pop     r5
+    pop     r4
     mov     pc,lr
     b .
 
