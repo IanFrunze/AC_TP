@@ -8,17 +8,17 @@
 	; r0 guarda o valor da variavel M
 	; r1 guarda o valor da variavel m
 	; r2 guarda o valor da variavel p
-	; r3 e utilizado para guardar valores temporariamente
+	; r3 é utilizado para guardar valores temporariamente
 	mov	r2, #0
 if:
-	mov r3,#0
-	cmp r0,r2
+	mov r3, #0
+	cmp r0, r2
 	beq if_end
-	cmp r0,r1
+	cmp r0, r1
 	bhs while
-	mov r3,r0
-	mov r0,r1
-	mov r1,r3
+	mov r3, r0
+	mov r0, r1
+	mov r1, r3
 while:
 	mov	r3, #0
 	cmp	r3, r1
