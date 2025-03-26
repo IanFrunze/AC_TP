@@ -97,6 +97,7 @@ srand_ret:
     mov     pc, lr
 
 rand:
+    push    lr
     push    r4
     push    r5
     ldr     r0, seed0_addr
@@ -107,9 +108,7 @@ rand:
     mov     r2, #0xFD
     movt    r2, #0x43
     mov     r3, #0x03
-    push    lr
     bl      umull32
-    pop     lr
     ; (umull32(seed,214013) + 2531011)
     mov     r2, #0xC3
     movt    r2, #0x9E
@@ -120,7 +119,8 @@ rand:
 loopDivide_init:
     mov     r2, #0xFF
     movt    r2, #0xFF
-    mov     r3, #0
+    mov     r3, #0xFF
+    movt    r3, #0xFF
     b       loopDivide_cond
 loopDivide:
     sub     r0, r0, r2
@@ -144,8 +144,7 @@ loopDivide_cond:
 rand_ret:
     pop     r5
     pop     r4
-    mov     pc, lr
-    b .
+    pop     pc
 
 seed0_addr:
     .word   seed0  
@@ -174,21 +173,21 @@ main:
     ; r6 = i
     ; r7 = N
     mov     r5, #0  ; error = 0
-    mov     r8, #0x2F 
-    movt    r8, #0x15 ; r8 = 5423
-    mov     r9, #0x0 ; r9 = 0, para 5423 ser a 32 bits
+    mov     r0, #0x2F 
+    movt    r0, #0x15 ; r8 = 5423
+    mov     r1, #0x0 ; r9 = 0, para 5423 ser a 32 bits
     bl      srand
 main_for_init:
-    mov     r4, #0 ; i = 0
+    mov     r6, #0 ; i = 0
     b       main_for_cond
 main_for:
     bl      rand
     mov     r4, r0 ; rand_number = retorno do rand()
 main_if_cond:
-    ldr     r10, result_addr
-    ldr     r10, [r6, r10]; r10 = result[i]
-    cmp     r4, r10
-    bne     main_if_end  
+    ldr     r8, result_addr
+    ldr     r8, [r6, r8]; r10 = result[i]
+    cmp     r4, r8
+    beq     main_if_end  
 main_if:
     mov     r5, #1  
 main_if_end:
