@@ -39,6 +39,7 @@ umull32_if:
     adc     r5, r5, r1
     b       umull32_if_end
 umull32_else_if:
+    ; cond
     mov     r7, #1
     and     r10, r2, r7
     bzs     umull32_if_end
@@ -69,20 +70,19 @@ umull32_ret:
     mov     pc,lr
     b .
 
-/*
-void srand( uint32_t nseed ) {
-    seed = nseed;
-}
-*/
-
 srand:
+    ; r0 e r1 -> nseed
+    mov     r2,sp
+    ldr     r3,seed0_addr
+    ldr     sp,[r3]
+    pop     r3
+    pop     r3
+    push    r1
+    push    r0
+    mov     sp,r2
+srand_ret:
+    mov     pc,lr
 
-/*
-uint16_t rand( void ) {
-    seed = ( umull32( seed , 214013 ) + 2531011 ) % RAND_MAX;
-    return ( seed >> 16 );
-}
-*/
 rand:
     ldr     r0,seed0_addr
     ldr     r0,[r0]
@@ -102,15 +102,15 @@ rand:
     add     r0,r0,r2
     adc     r1,r1,r3
     ; ..% RAND_MAX
-    for_init:
+loopDivide_init:
     mov     r2, #0xFF
     movt    r2, #0xFF
     mov     r3, #0
     b       for_cond
-    for:
+loopDivide:
     sub     r0,r0,r2
     sbc     r1,r1,r3
-    for_cond:
+loopDivide_cond:
     cmp     r0,r2
     sbc     r4,r1,r3
     bhs     for
@@ -126,24 +126,9 @@ rand:
     mov     sp,r4
     ;seed >> 16
     mov     r0,r7
+rand_ret:
     mov     pc,lr
     b .
-/*
-int main( void ) {
-    uint8_t error = 0;
-    uint16_t rand_number;
-    uint16_t i;
-    srand( 5423 );
-    for( i = 0; error == 0 && i < N; i++ ) {
-        rand_number = rand();
-        if( rand_number != result[i] ) {
-            error = 1;
-        }
-    }
-    return 0;
-}
-*/
-
 main:
 
 
