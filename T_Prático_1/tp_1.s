@@ -6,7 +6,7 @@
 
 program: 
     ldr sp, stack_top_addr
-    b main
+    b umull32
 stack_top_addr:
     .word stack_top
 
@@ -120,14 +120,14 @@ loopDivide_init:
     mov     r2, #0xFF
     movt    r2, #0xFF
     mov     r3, #0
-    b       for_cond
+    b       loopDivide_cond
 loopDivide:
     sub     r0,r0,r2
     sbc     r1,r1,r3
 loopDivide_cond:
     cmp     r0,r2
     sbc     r4,r1,r3
-    bhs     for
+    bhs     loopDivide
     ; seed = ...
     mov     r4, sp
     ldr     r5, seed0_addr
@@ -146,46 +146,11 @@ rand_ret:
     mov     pc,lr
     b .
 
-main:
-    push    lr
-    push    r0 ; error
-    push    r1 ; rand_number
-    push    r2 ; i
-    push    r3 ; N
-    mov     r4, 0x152F
-    mov     r5, 0x0000
-    bl      srand
-main_for_init:
-    mov     r0, #0 ; error = 0
-    mov     r2, #0 ; i = 0
-    b       main_for_cond
-main_for:
-    ; como meter retorno do rand() no rand_number?
-    bl       rand
-;
-main_if:
 
-main_if_cond:
-    cmp     r1, ; ?
-    beq     main_if     
-main_if_end:
-    mov     r0, #1
-;
-main_for_cond:
-    cmp     r3, r2
-    bzc     main_for_end
-    and     r0, r0, r0
-    bzc     main_for_end
-    add     r2, r2, #1 ; i++
-    blo     main_for
-main_for_end:
-    pop     r3
-    pop     r2
-    pop     r1
-    pop     r0
-    pop     pc
-    b .
-
+seed0_addr:
+    .word   seed0  
+seed1_addr:
+    .word   seed1
     .data; Variáveis globais
 result:
     .word 17747, 2055, 3664, 15611, 9816; result[N]
