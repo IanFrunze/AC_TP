@@ -43,6 +43,8 @@ umull32:
     push    r8
     push    r9
     push    r10
+    mov     r4,#0
+    mov     r5,#0
     mov     r8, #0 ; p_1
 umull32_for_init:
     mov     r9, #32
@@ -76,7 +78,7 @@ umull32_if_end:
     mov     r7, #1
     and     r8, r7, r2
     ; p >>= 1
-    lsr     r5, r5, #1
+    asr     r5, r5, #1
     rrx     r4, r4
     rrx     r3, r3
     rrx     r2, r2
