@@ -5,8 +5,9 @@
 ; Data : 27/03/2025
 ; ---------------------------------------------------------------------------------------
 
-    .equ STACK_SIZE, 7 ; Nao usa mais de 7 words
+    .equ STACK_SIZE, 20 ; Nao usa mais de 20 bytes
     .equ N, 5
+    .equ RAND_MAX, 0xFF
     
     .text
     b   program
@@ -43,50 +44,46 @@ umull32:
     push    r8
     push    r9
     push    r10
-    mov     r4,#0
-    mov     r5,#0
-    mov     r8, #0 ; p_1
+    mov     r4, #0
+    mov     r5, #0
+    mov     r8, #1
+    mov     r6, #0 ; p_1
 umull32_for_init:
     mov     r9, #32
-    mov     r6, #0 ; i
+    mov     r7, #0 ; i
     b       umull32_for_cond
 umull32_for:
 umull32_if:
-    ; cond
-    mov     r7, #1 ; r7 = p_1
-    and     r10, r2, r7 ; p and 0x1
+    ; condição
+    and     r10, r2, r8 ; p and 0x1 == 0
     bzc     umull32_else_if
-    cmp     r7, r8 ; p_1 == 1
+    cmp     r6, r8 ; p_1 == 1
     bzc     umull32_else_if
     ; p += M_ext << 32
     add     r4, r4, r0  
     adc     r5, r5, r1
     b       umull32_if_end
 umull32_else_if:
-    ; cond
-    mov     r7, #1
-    and     r10, r2, r7
+    ; condição
+    and     r10, r2, r8 ; p and 0x1 == 1
     bzs     umull32_if_end
-    mov     r7, r8 ; Move p_1 temporariamente para r7
-    and     r7, r7, r7 ; p_1 == 0
+    and     r6, r6, r6 ; p_1 == 0
     bzc     umull32_if_end
     ; p -= M_ext << 32
     sub     r4, r4, r0 ; 
     sbc     r5, r5, r1
 umull32_if_end:
     ; p_1 = p and 0x1
-    mov     r7, #1
-    and     r8, r7, r2
+    and     r6, r2, r8
     ; p >>= 1
     asr     r5, r5, #1
     rrx     r4, r4
     rrx     r3, r3
     rrx     r2, r2
     ; i++
-    mov     r7, #1
-    add     r6, r6, r7
+    add     r7, r7, r8
 umull32_for_cond:
-    cmp     r6, r9 ; i < 32
+    cmp     r7, r9 ; i < 32
     blo     umull32_for
 umull32_ret:
     mov    r0, r2
@@ -110,14 +107,9 @@ umull32_ret:
 
 srand:
     ; r0 e r1 -> nseed
-    mov     r2, sp
-    ldr     r3, seed0_addr
-    ldr     sp, [r3]
-    pop     r3
-    pop     r3
-    push    r1
-    push    r0
-    mov     sp, r2
+    ldr     r2,seed_addr
+    str     r0,[r2]
+    str     r1,[r2,#2]
 srand_ret:
     mov     pc, lr
 
@@ -133,15 +125,15 @@ rand:
     push    lr
     push    r4
     push    r5
-    ldr     r0, seed0_addr
-    ldr     r0, [r0]
-    ldr     r1, seed1_addr
-    ldr     r1, [r1]
-    ; umull32(seed,214013) esta em r0 e r
+    ldr     r2, seed_addr
+    ; seed em r0 e r1
+    ldr     r0, [r2]
+    ldr     r1, [r2,#2]
+    ; umull32(seed,214013)
     mov     r2, #0xFD
     movt    r2, #0x43
     mov     r3, #0x03
-    bl      umull32
+    bl      umull32 ; retorna em r0 e r1
     ; (umull32(seed,214013) + 2531011)
     mov     r2, #0xC3
     movt    r2, #0x9E
@@ -150,39 +142,34 @@ rand:
     adc     r1, r1, r3
     ; ..% RAND_MAX
 loopDivide_init:
-    mov     r2, #0xFF
-    movt    r2, #0xFF
-    mov     r3, #0xFF
-    movt    r3, #0xFF
+    mov     r2, #RAND_MAX
+    movt    r2, #RAND_MAX
+    mov     r3, #RAND_MAX
+    movt    r3, #RAND_MAX
     b       loopDivide_cond
 loopDivide:
+    ; A - B 
     sub     r0, r0, r2
     sbc     r1, r1, r3
 loopDivide_cond:
+    ; quando A < B ele para o loop
     cmp     r0, r2
     sbc     r4, r1, r3
-    bhs     loopDivide
-    ; seed = ...
-    mov     r4, sp
-    ldr     r5, seed0_addr
-    ldr     sp, [r5]
-    pop     r5
-    pop     r5
-    mov     r5, r0
-    push    r1
-    push    r0
-    mov     sp, r4
-    ;seed >> 16
-    mov     r0, r5
+    bhs     loopDivide 
+    ; resto da divisão fica em r0 e r1
+    ; seed = r0 e r1
+    ldr     r5, seed_addr
+    str     r0,[r5]
+    str     r1,[r5,#2]
 rand_ret:
+    ; seed >> 16 
+    mov     r0,r1
     pop     r5
     pop     r4
     pop     pc
 
-seed0_addr:
-    .word   seed0  
-seed1_addr:
-    .word   seed1
+seed_addr:
+    .word   seed
 
 ; ---------------------------------------------------------------------------------------
 ; Rotina : main
@@ -194,36 +181,39 @@ seed1_addr:
 
 main:
     ; r4 = rand_number
-    ; r5 = error
     ; r6 = i
-    ; r7 = N
-    mov     r5, #0  ; error = 0
+    ; r5 = N
+    ; r7 = result[i]
+    /*
+    error é usado apenas para dar break no loop,
+    então em vez de guardar o error num registo, 
+    fazer uma verificação e só depois dar break, 
+    aplica-se um break diretamente
+    */
+    mov     r5, #N
     mov     r0, #0x2F 
-    movt    r0, #0x15 ; r8 = 5423
-    mov     r1, #0x0 ; r9 = 0, para 5423 ser a 32 bits
-    bl      srand
+    movt    r0, #0x15 ; r0 = 5423
+    mov     r1, #0x0 ; r1 = 0, para 5423 ser a 32 bits
+    bl      srand 
 main_for_init:
     mov     r6, #0 ; i = 0
     b       main_for_cond
 main_for:
     bl      rand
     mov     r4, r0 ; rand_number = retorno do rand()
-main_if_cond:
-    ldr     r8, result_addr
-    ldr     r8, [r6, r8]; r10 = result[i]
-    cmp     r4, r8
-    beq     main_if_end  
 main_if:
-    mov     r5, #1  
+    ; condição
+    ldr     r7, result_addr
+    lsl     r9,r6,#1 ; i * 2
+    ldr     r7, [r7, r9]; r7 = result[i]
+    cmp     r4, r7 ; rand_number != result[i]
+    ; error = 1
+    bne     main_ret ; dá break no loop (ou seja error = 1)
 main_if_end:
     add     r6, r6, #1 ; i++
 main_for_cond:
-    mov     r7, #N ; N
-    and     r5, r5, r5 ; Verifica error == 0
-    bzc     main_ret
-    cmp     r6, r7 ; i < N
-    bhs     main_ret
-    b       main_for
+    cmp     r6, r5 ; i < N
+    blo     main_for
 main_ret:
     b .
 
@@ -233,8 +223,7 @@ result_addr:
     .data ; Variaveis globais
 result:
     .word 17747, 2055, 3664, 15611, 9816; result[N]
-seed0:  .word 1; 16..0
-seed1:  .word 0; 32..16
+seed:   .word 1,0
     .stack
     .space  STACK_SIZE
 stack_top:
