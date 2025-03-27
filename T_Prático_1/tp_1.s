@@ -1,6 +1,8 @@
 ; ---------------------------------------------------------------------------------------
 ; Ficheiro : tp_1.s
-; Descricao : (?)
+; Descricao : Este codigo implementa um programa para o P16 que gera numeros 
+;             pseudo-aleatorios e os multiplica por uma constante, comparando o resultado
+;             com uma outra constante. (?)
 ; Autor : Ian Frunze (A52867@alunos.isel.pt), Tito Silva (A53118@alunos.isel.pt)
 ; Data : 27/03/2025
 ; ---------------------------------------------------------------------------------------
@@ -21,22 +23,22 @@ stack_top_addr:
 
 ; ---------------------------------------------------------------------------------------
 ; Rotina : umull32
-; Descricao : Multiplicacao de 32 bits (bit a bit) com 64 bits de resultado
+; Descricao : Multiplicacao entre 2 operandos de 32 bits (bit a bit), com 32 bits de resultado
 ; Entradas : r0, r1, r2, r3
-; Saidas : r0 (?)
-; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; Saidas : r0, r1
+; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
 ; ---------------------------------------------------------------------------------------
 
 umull32:
     ; 32 bits menor peso do M_ext:
-    ; r0 M_ext 16..0
+    ; r0 M_ext 15..0
     ; r1 M_ext 32..16
     ; 32 bits menor peso do p:
-    ; r2 p 16..0
-    ; r3 p 32..16
+    ; r2 p 15..0 (p1)
+    ; r3 p 32..16 (p2)
     ; 32 bits maior peso do p:
-    ; r4 p 48..32 
-    ; r5 p 64..48
+    ; r4 p 48..32 (p3)
+    ; r5 p 64..48 (p4)
     push    r4
     push    r5
     push    r6
@@ -60,8 +62,8 @@ umull32_if:
     cmp     r6, r8 ; p_1 == 1
     bzc     umull32_else_if
     ; p += M_ext << 32
-    add     r4, r4, r0  
-    adc     r5, r5, r1
+    add     r4, r4, r0 ; p3 += M_ext 15..0
+    adc     r5, r5, r1 ; p4 += M_ext 32..16
     b       umull32_if_end
 umull32_else_if:
     ; condição
@@ -86,8 +88,8 @@ umull32_for_cond:
     cmp     r7, r9 ; i < 32
     blo     umull32_for
 umull32_ret:
-    mov    r0, r2
-    mov    r1, r3
+    mov    r0, r2 ; r0 = p1
+    mov    r1, r3 ; r1 = p2
     pop    r10
     pop    r9
     pop    r8
@@ -99,10 +101,10 @@ umull32_ret:
 
 ; ---------------------------------------------------------------------------------------
 ; Rotina : srand
-; Descricao : (?)
+; Descricao : Inicializa a "seed" a 32 bits para a geracao de numeros pseudo-aleatorios
 ; Entradas : r0, r1
-; Saidas : descricao dos valores devolvidos pela rotina
-; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; Saidas : r0 ?
+; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
 ; ---------------------------------------------------------------------------------------
 
 srand:
@@ -114,11 +116,11 @@ srand_ret:
     mov     pc, lr
 
 ; ---------------------------------------------------------------------------------------
-; Rotina :rand
+; Rotina : rand
 ; Descricao : (?)
 ; Entradas : (void?)
 ; Saidas : r0 (?)
-; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
 ; ---------------------------------------------------------------------------------------
 
 rand:
@@ -137,10 +139,10 @@ rand:
     ; (umull32(seed,214013) + 2531011)
     mov     r2, #0xC3
     movt    r2, #0x9E
-    mov     r3, #0x26
+    mov     r3, #0x26 ; 2531011
     add     r0, r0, r2
     adc     r1, r1, r3
-    ; ..% RAND_MAX
+    ; (umull32(seed,214013) + 2531011) % RAND_MAX
 loopDivide_init:
     mov     r2, #RAND_MAX
     movt    r2, #RAND_MAX
@@ -173,10 +175,13 @@ seed_addr:
 
 ; ---------------------------------------------------------------------------------------
 ; Rotina : main
-; Descricao : (?)
-; Entradas : (void?)
-; Saidas : descricao dos valores devolvidos pela rotina
-; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; Descricao : Inicializa a "seed" e gera N numeros pseudo-aleatorios, comparando-os com
+;             os valores de "result". Se algum dos valores gerados for igual a um dos
+;             valores de result, a variavel error e' incrementada.
+;             No final, se error for diferente de 0, o programa termina.
+; Entradas : (void)
+; Saidas : r0
+; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
 ; ---------------------------------------------------------------------------------------
 
 main:
