@@ -1,4 +1,11 @@
-    .equ STACK_SIZE, 7 ; Não usa mais de 7 words
+; ---------------------------------------------------------------------------------------
+; Ficheiro : tp_1.s
+; Descricao : (?)
+; Autor : Ian Frunze (A52867@alunos.isel.pt), Tito Silva (A53118@alunos.isel.pt)
+; Data : 27/03/2025
+; ---------------------------------------------------------------------------------------
+
+    .equ STACK_SIZE, 7 ; Nao usa mais de 7 words
     .equ N, 5
     
     .text
@@ -10,6 +17,14 @@ program:
     b   main
 stack_top_addr:
     .word stack_top
+
+; ---------------------------------------------------------------------------------------
+; Rotina : umull32
+; Descricao : Multiplicacao de 32 bits (bit a bit) com 64 bits de resultado
+; Entradas : r0, r1, r2, r3
+; Saidas : r0 (?)
+; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; ---------------------------------------------------------------------------------------
 
 umull32:
     ; 32 bits menor peso do M_ext:
@@ -54,7 +69,7 @@ umull32_else_if:
     and     r7, r7, r7 ; p_1 == 0
     bzc     umull32_if_end
     ; p -= M_ext << 32
-    sub     r4, r4, r0
+    sub     r4, r4, r0 ; 
     sbc     r5, r5, r1
 umull32_if_end:
     ; p_1 = p and 0x1
@@ -83,6 +98,14 @@ umull32_ret:
     pop    r4
     mov    pc, lr
 
+; ---------------------------------------------------------------------------------------
+; Rotina : srand
+; Descricao : (?)
+; Entradas : r0, r1
+; Saidas : descricao dos valores devolvidos pela rotina
+; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; ---------------------------------------------------------------------------------------
+
 srand:
     ; r0 e r1 -> nseed
     mov     r2, sp
@@ -96,6 +119,14 @@ srand:
 srand_ret:
     mov     pc, lr
 
+; ---------------------------------------------------------------------------------------
+; Rotina :rand
+; Descricao : (?)
+; Entradas : (void?)
+; Saidas : r0 (?)
+; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; ---------------------------------------------------------------------------------------
+
 rand:
     push    lr
     push    r4
@@ -104,7 +135,7 @@ rand:
     ldr     r0, [r0]
     ldr     r1, seed1_addr
     ldr     r1, [r1]
-    ; umull32(seed,214013) está em r0 e r
+    ; umull32(seed,214013) esta em r0 e r
     mov     r2, #0xFD
     movt    r2, #0x43
     mov     r3, #0x03
@@ -151,21 +182,13 @@ seed0_addr:
 seed1_addr:
     .word   seed1
 
-/*
-int main( void ) {
-    uint8_t error = 0;
-    uint16_t rand_number;
-    uint16_t i;
-    srand( 5423 );
-    for( i = 0; error == 0 && i < N; i++ ) {
-        rand_number = rand();
-        if( rand_number != result[i] ) {
-            error = 1;
-        }
-    }
-    return 0;
-}
-*/
+; ---------------------------------------------------------------------------------------
+; Rotina : main
+; Descricao : (?)
+; Entradas : (void?)
+; Saidas : descricao dos valores devolvidos pela rotina
+; Efeitos : descricao das alteracoes feitas pela rotina em registos, memoria e portos
+; ---------------------------------------------------------------------------------------
 
 main:
     ; r4 = rand_number
@@ -205,7 +228,7 @@ main_ret:
 result_addr:
     .word result
 
-    .data ; Variáveis globais
+    .data ; Variaveis globais
 result:
     .word 17747, 2055, 3664, 15611, 9816; result[N]
 seed0:  .word 1; 16..0
