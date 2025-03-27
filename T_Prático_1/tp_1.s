@@ -37,7 +37,7 @@ umull32:
     ; r2 p 15..0 (p1)
     ; r3 p 32..16 (p2)
     ; 32 bits maior peso do p:
-    ; r4 p 48..32 (p3)
+    ; r4 p 47..32 (p3)
     ; r5 p 64..48 (p4)
     push    r4
     push    r5
@@ -103,12 +103,13 @@ umull32_ret:
 ; Rotina : srand
 ; Descricao : Inicializa a "seed" a 32 bits para a geracao de numeros pseudo-aleatorios
 ; Entradas : r0, r1
-; Saidas : r0 ?
+; Saidas : void
 ; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
 ; ---------------------------------------------------------------------------------------
 
 srand:
     ; r0 e r1 -> nseed
+    ; seed = nseed
     ldr     r2,seed_addr
     str     r0,[r2]
     str     r1,[r2,#2]
@@ -117,9 +118,10 @@ srand_ret:
 
 ; ---------------------------------------------------------------------------------------
 ; Rotina : rand
-; Descricao : (?)
-; Entradas : (void?)
-; Saidas : r0 (?)
+; Descricao : Realiza operações ariteméticas e lógicas com constantes e a seed, 
+;   assim gerando um valor pseodo aleatório, o qual irá depender da seed
+; Entradas : void
+; Saidas : r0
 ; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
 ; ---------------------------------------------------------------------------------------
 
@@ -154,7 +156,7 @@ loopDivide:
     sub     r0, r0, r2
     sbc     r1, r1, r3
 loopDivide_cond:
-    ; quando A < B ele para o loop
+    ; quando A < B para o loop
     cmp     r0, r2
     sbc     r4, r1, r3
     bhs     loopDivide 
@@ -176,9 +178,8 @@ seed_addr:
 ; ---------------------------------------------------------------------------------------
 ; Rotina : main
 ; Descricao : Inicializa a "seed" e gera N numeros pseudo-aleatorios, comparando-os com
-;             os valores de "result". Se algum dos valores gerados for igual a um dos
-;             valores de result, a variavel error e' incrementada.
-;             No final, se error for diferente de 0, o programa termina.
+;             os valores de "result". Se algum dos valores gerados for diferente do seu
+;             correspondente valor na lista result, o loop é quebrado.
 ; Entradas : (void)
 ; Saidas : r0
 ; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
@@ -189,12 +190,8 @@ main:
     ; r6 = i
     ; r5 = N
     ; r7 = result[i]
-    /*
-    error é usado apenas para dar break no loop,
-    então em vez de guardar o error num registo, 
-    fazer uma verificação e só depois dar break, 
-    aplica-se um break diretamente
-    */
+    ; r8 = error
+    mov     r8, #0
     mov     r5, #N
     mov     r0, #0x2F 
     movt    r0, #0x15 ; r0 = 5423
@@ -212,14 +209,21 @@ main_if:
     lsl     r9,r6,#1 ; i * 2
     ldr     r7, [r7, r9]; r7 = result[i]
     cmp     r4, r7 ; rand_number != result[i]
-    ; error = 1
-    bne     main_ret ; dá break no loop (ou seja error = 1)
+    beq     main_if_end
+    ; erro = 1 e dá break no loop
+    mov     r8, #1
+    b       main_ret
 main_if_end:
     add     r6, r6, #1 ; i++
 main_for_cond:
+    /*
+    não preciso de verificar em cada ciclo do loop se o erro é 0, 
+    pois o loop já é quebrado logo quando o erro fica 1
+    */
     cmp     r6, r5 ; i < N
     blo     main_for
 main_ret:
+    mov     r0, #0
     b .
 
 result_addr:
