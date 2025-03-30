@@ -27,7 +27,8 @@ stack_top_addr:
 ; Entradas : r0, r1, r2, r3
 ; Saidas : r0, r1
 ; Efeitos : r0 a r1 passam o parâmetro de M_ext e r2 a r3 passam o parâmetro de p a 32 bits, 
-;           r0 e r1 contêm o resultado da multiplicação
+;           r0 e r1 contêm o resultado da multiplicação, Guarda em memória os registos r4 a r10,
+;           para operações intermédias.
 ; ---------------------------------------------------------------------------------------
 
 umull32:
@@ -102,10 +103,10 @@ umull32_ret:
 
 ; ---------------------------------------------------------------------------------------
 ; Rotina : srand
-; Descricao : Inicializa a "seed" a 32 bits para a geracao de numeros pseudo-aleatorios
+; Descricao : Inicializa a "seed" a 32 bits para a geracao de numeros pseudo-aleatórios.
 ; Entradas : r0, r1
 ; Saidas : void
-; Efeitos : r0 e r1 são guardados na memória, em seed_addr
+; Efeitos : Altera o valor da seed através de r0 e r1.
 ; ---------------------------------------------------------------------------------------
 
 srand:
@@ -120,10 +121,11 @@ srand_ret:
 ; ---------------------------------------------------------------------------------------
 ; Rotina : rand
 ; Descricao : Realiza operações ariteméticas e lógicas com constantes e a seed, 
-;             assim gerando um valor pseodo aleatório, o qual irá depender da seed
+;             assim gerando um valor pseudo-aleatório.
 ; Entradas : void
 ; Saidas : r0
-; Efeitos : r0 contém o valor pseudo-aleatório gerado, e a seed é atualizada na memória
+; Efeitos : Guarda na memória lr, r4 e r5. Guarda o valor da seed em r0 e r1. 
+;           Utiliza-se os registo r2 e r3 para operações intermédias.
 ; ---------------------------------------------------------------------------------------
 
 rand:
@@ -181,9 +183,9 @@ seed_addr:
 ; Descricao : Inicializa a "seed" e gera N numeros pseudo-aleatorios, comparando-os com
 ;             os valores de "result". Se algum dos valores gerados for diferente do seu
 ;             correspondente valor na lista result, o loop acaba (quebra).
-; Entradas : (void)
+; Entradas : void
 ; Saidas : r0
-; Efeitos : r0 contém 0 se não houve erro, 1 se houve erro.
+; Efeitos : Utiliza os registos r4 a r9
 ; ---------------------------------------------------------------------------------------
 
 main:
@@ -192,7 +194,7 @@ main:
     ; r5 = N
     ; r7 = result[i]
     ; r8 = error
-    mov     r8, #0
+    mov     r8, #0 ; error = 0
     mov     r5, #N
     mov     r0, #0x2F 
     movt    r0, #0x15 ; r0 = 5423
@@ -207,11 +209,11 @@ main_for:
 main_if:
     ; condição
     ldr     r7, result_addr
-    lsl     r9,r6,#1 ; i * 2
-    ldr     r7, [r7, r9]; r7 = result[i]
+    lsl     r9, r6, #1 ; i * 2
+    ldr     r7, [r7, r9] ; r7 = result[i]
     cmp     r4, r7 ; rand_number != result[i]
     beq     main_if_end
-    ; erro = 1 e dá break no loop
+    ; error = 1 e dá break no loop
     mov     r8, #1
     b       main_ret
 main_if_end:
@@ -229,7 +231,7 @@ result_addr:
     .data ; Variaveis globais
 result:
     .word 17747, 2055, 3664, 15611, 9816 ; result[N]
-seed:   .word 1,0
+seed:   .word 1, 0
     .stack
     .space  STACK_SIZE
 stack_top:
