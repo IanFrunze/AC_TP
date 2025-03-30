@@ -2,13 +2,13 @@
 ; Ficheiro : tp_1.s
 ; Descricao : Este codigo implementa um programa para o P16 que gera numeros 
 ;             pseudo-aleatorios e os multiplica por uma constante, comparando o resultado
-;             com uma outra constante. (?)
+;             com uma outra constante.
 ; Autor : Ian Frunze (A52867@alunos.isel.pt), Tito Silva (A53118@alunos.isel.pt)
-; Data : 27/03/2025
+; Data : 30/03/2025
 ; ---------------------------------------------------------------------------------------
 
     .equ STACK_SIZE, 20 ; Nao usa mais de 20 bytes
-    .equ N, 5
+    .equ N, 5 ; N = 5 (Numero de elementos em result)
     .equ RAND_MAX, 0xFF
     
     .text
@@ -26,7 +26,8 @@ stack_top_addr:
 ; Descricao : Multiplicacao entre 2 operandos de 32 bits (bit a bit), com 32 bits de resultado
 ; Entradas : r0, r1, r2, r3
 ; Saidas : r0, r1
-; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
+; Efeitos : r0 a r1 passam o parâmetro de M_ext e r2 a r3 passam o parâmetro de p a 32 bits, 
+;           r0 e r1 contêm o resultado da multiplicação
 ; ---------------------------------------------------------------------------------------
 
 umull32:
@@ -104,25 +105,25 @@ umull32_ret:
 ; Descricao : Inicializa a "seed" a 32 bits para a geracao de numeros pseudo-aleatorios
 ; Entradas : r0, r1
 ; Saidas : void
-; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
+; Efeitos : r0 e r1 são guardados na memória, em seed_addr
 ; ---------------------------------------------------------------------------------------
 
 srand:
     ; r0 e r1 -> nseed
     ; seed = nseed
-    ldr     r2,seed_addr
-    str     r0,[r2]
-    str     r1,[r2,#2]
+    ldr     r2, seed_addr
+    str     r0, [r2]
+    str     r1, [r2,#2]
 srand_ret:
     mov     pc, lr
 
 ; ---------------------------------------------------------------------------------------
 ; Rotina : rand
 ; Descricao : Realiza operações ariteméticas e lógicas com constantes e a seed, 
-;   assim gerando um valor pseodo aleatório, o qual irá depender da seed
+;             assim gerando um valor pseodo aleatório, o qual irá depender da seed
 ; Entradas : void
 ; Saidas : r0
-; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
+; Efeitos : r0 contém o valor pseudo-aleatório gerado, e a seed é atualizada na memória
 ; ---------------------------------------------------------------------------------------
 
 rand:
@@ -163,11 +164,11 @@ loopDivide_cond:
     ; resto da divisão fica em r0 e r1
     ; seed = r0 e r1
     ldr     r5, seed_addr
-    str     r0,[r5]
-    str     r1,[r5,#2]
+    str     r0, [r5]
+    str     r1, [r5,#2]
 rand_ret:
     ; seed >> 16 
-    mov     r0,r1
+    mov     r0, r1
     pop     r5
     pop     r4
     pop     pc
@@ -179,10 +180,10 @@ seed_addr:
 ; Rotina : main
 ; Descricao : Inicializa a "seed" e gera N numeros pseudo-aleatorios, comparando-os com
 ;             os valores de "result". Se algum dos valores gerados for diferente do seu
-;             correspondente valor na lista result, o loop é quebrado.
+;             correspondente valor na lista result, o loop acaba (quebra).
 ; Entradas : (void)
 ; Saidas : r0
-; Efeitos : (descricao das alteracoes feitas pela rotina em registos, memoria e portos)?
+; Efeitos : r0 contém 0 se não houve erro, 1 se houve erro.
 ; ---------------------------------------------------------------------------------------
 
 main:
@@ -216,10 +217,6 @@ main_if:
 main_if_end:
     add     r6, r6, #1 ; i++
 main_for_cond:
-    /*
-    não preciso de verificar em cada ciclo do loop se o erro é 0, 
-    pois o loop já é quebrado logo quando o erro fica 1
-    */
     cmp     r6, r5 ; i < N
     blo     main_for
 main_ret:
@@ -231,7 +228,7 @@ result_addr:
 
     .data ; Variaveis globais
 result:
-    .word 17747, 2055, 3664, 15611, 9816; result[N]
+    .word 17747, 2055, 3664, 15611, 9816 ; result[N]
 seed:   .word 1,0
     .stack
     .space  STACK_SIZE
