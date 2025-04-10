@@ -1,0 +1,34 @@
+1.
+    A seguinte afirmação é falsa, pois a microarquitetura do processador é do tipo Harvard.
+    Enquanto que a arquitetura Von Neumann partilha o mesmo espaço de enderençamento de código que o espaço de enderençamento de dados, 
+    a arquitetura Harvard distingue o espaço de enderençamento de código e de dados.
+    Outro aspeto que distingue as duas arquiteturas é em relação ao PC (Program Counter). Na arquitetura Von Neumann, o PC aponta para a instrução seguinte que o CPU irá executar, 
+    enquanto que na arquitetura Harvard, o PC aponta para a instrução que está a executar.
+
+2.
+    A funcionalidade do módulo Ext resume-se a dois propósitos simples. Se o seletor SE estiver a 1, adiciona 2 zeros à esquerdo do número, e se o seletor SE estiver a 0, 
+    faz extensão de sinal do bit de maior peso. (melhorar)
+
+3.
+    b
+
+4.
+    c
+
+5.
+    d
+
+6.
+    e
+
+7.
+    f
+
+8.
+    B, pois na entrada da ROM os 3 bits de menor peso equivalem ao OPCODE (Operation Code) e o bit de maior peso corresponde a flag Z (Zero) gerada internamente pela microarquitetura. (melhorar)
+
+9.
+    2^4 words x 9 bits por word = 144 bits (melhorar)
+
+10.
+    (Excel)
