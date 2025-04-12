@@ -1,34 +1,45 @@
 1.
     A seguinte afirmação é falsa, pois a microarquitetura do processador é do tipo Harvard.
     Enquanto que a arquitetura Von Neumann partilha o mesmo espaço de enderençamento de código que o espaço de enderençamento de dados, 
-    a arquitetura Harvard distingue o espaço de enderençamento de código e de dados.
+    a arquitetura Harvard distingue o espaço de enderençamento de código e de dados, possibilitando assim o código da instrução ser a 12 bits.
     Outro aspeto que distingue as duas arquiteturas é em relação ao PC (Program Counter). Na arquitetura Von Neumann, o PC aponta para a instrução seguinte que o CPU irá executar, 
     enquanto que na arquitetura Harvard, o PC aponta para a instrução que está a executar.
 
 2.
-    A funcionalidade do módulo Ext resume-se a dois propósitos simples. Se o seletor SE estiver a 1, adiciona 2 zeros à esquerdo do número, e se o seletor SE estiver a 0, 
+    A funcionalidade do módulo Ext resume-se a dois propósitos simples. Se o seletor SE estiver a 0, adiciona 2 zeros à esquerdo do número, e se o seletor SE estiver a 1, 
     faz extensão de sinal do bit de maior peso. (melhorar)
 
 3.
-    b
+    A instrução b (branch) executa um salto incondicional com base no valor num registo (rx), enquanto que o bzs (branch zero set) executa um salto condicionado pela flag Z (Zero).
+
+    i. Na instrução b (branch), como a distância do salto já está guardada num registo (rx) apenas é necessário 3 bits para identificar esse mesmo registo, logo, 
+    uma vantgem deste método é ser compacto. Por outro lado, a instrução bzs (branch zero set) como está limitada a uma constante de 8 bits, uma desvantagem que sofre
+    é essa mesma constante incluir o endereço de código da próxima instrução a ser executada, assim, limitando a distância do salto.
+
+    ii.  
 
 4.
-    c
+    (anexo)
 
 5.
-    d
+    000 = mov, 001 = ldr, 010 = eor, 011 = and, 100 = str, 110 = not;
+    Para as instruções que necessitam de passar pela ALU, foi utilizado os bits de menor peso do OPCODE (Bit0 e Bit1, Operation Code) como enderençamento direto para o OP (OP_ALU).
+    101 = bzs, 111 = b;
+    Para as instruções que não necessitam de passar pela ALU, não houve nenhuma especificação para o OPCODE, ou seja, foi utilizado os códigos que sobraram.
 
 6.
-    e
+    Uma vantagem para a utilização de um código uniforme de comprimento fixo para a codificação do conjunto de instruções (Arquitetura RISC) é de ser eficiente em relação aos
+    ciclos clock utilizados, enquanto que uma desvantagem desta mesma arquitetura resume-se em que certos casos onde se utiliza poucos bits, acaba por haver um desperdício de
+    bits, ou seja, independentemente da quantidade de bits utilizados a instrução irá ter sempre o mesmo tamanho.
 
 7.
-    f
+    (anexo)
 
 8.
-    B, pois na entrada da ROM os 3 bits de menor peso equivalem ao OPCODE (Operation Code) e o bit de maior peso corresponde a flag Z (Zero) gerada internamente pela microarquitetura. (melhorar)
+    B, pois na entrada da ROM os 3 bits de menor peso equivalem ao OPCODE (Operation Code) e o bit de maior peso corresponde a flag Z (Zero) gerada internamente pela microarquitetura.
 
 9.
-    2^4 words x 9 bits por word = 144 bits (melhorar)
+    2^4 words x 9 bits por word = 144 bits
 
 10.
     (Excel)
