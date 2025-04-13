@@ -7,16 +7,24 @@
 
 2.
     A funcionalidade do módulo Ext resume-se a dois propósitos simples. Se o seletor SE estiver a 0, adiciona 2 zeros à esquerdo do número, e se o seletor SE estiver a 1, 
-    faz extensão de sinal do bit de maior peso. (melhorar)
+    faz extensão de sinal do bit de maior peso.
 
 3.
     A instrução b (branch) executa um salto incondicional com base no valor num registo (rx), enquanto que o bzs (branch zero set) executa um salto condicionado pela flag Z (Zero).
 
     i. Na instrução b (branch), como a distância do salto já está guardada num registo (rx) apenas é necessário 3 bits para identificar esse mesmo registo, logo, 
-    uma vantgem deste método é ser compacto. Por outro lado, a instrução bzs (branch zero set) como está limitada a uma constante de 8 bits, uma desvantagem que sofre
-    é essa mesma constante incluir o endereço de código da próxima instrução a ser executada, assim, limitando a distância do salto.
+    uma vantgem deste método é ser compacto. Por outro lado, a instrução bzs (branch zero set) utiliza 8 dos bits da instrução apenas para designar a distância do salto, ou seja,
+    em contraste com a instrução branch, não é compacto.
+    
 
-    ii.  
+    ii. Na instrução b (branch), como a distância do salto está guardada num registo (rx), a instrução necessita aceder ao banco de registos e retirar a distância do salto, 
+        logo esse processo irá demorar mais tempo mas permite uma maior flexibilidade no código, pois esse valor no registo acompanhará qualquer alteração no código. Enquanto que, 
+        a instrução bzs (branch zero set) contem a distância do salto numa constante sem necessitar de passar pelo banco de registos, logo demora menos tempo mas tem o prejuízo de 
+        ter uma menor flexibilidade no código, pois essa constante é fixa e não acompanhará alterações no código.
+
+    iii. Na instrução b (branch), como o salto é incondicional, quando o PC (Program Counter) estiver a apontar para essa mesma instrução, o processador vai executar o salto independentemente
+         de qualquer Flag, enquanto que, na instrução bzs (branch zero set), como o salto de depende do valor da Flag Z (Zero), quando o PC (Program Counter) estiver a apontar para essa mesma instrução,
+         o processador vai primeiro verificar o valor da Flag Z e depois noutro ciclo máquina é que vai executar a instrução.
 
 4.
     (anexo)
