@@ -1,0 +1,25 @@
+1.
+    (O que é que quer dizer com interdita?)
+
+2.
+    1FFF - 0000 + 1 = 2000
+    9FFF - 8000 + 1 = 2000
+    2000 + 2000 = 4000 = 16KB
+    Como a RAM se localiza em 2 mapas de enderençamento diferentes, ou seja, representam os mesmos dados. Então na verdade só existe 8KB.
+
+
+3.
+    (esperar pelas aulas pra perguntar ao stor)
+
+4.
+    (esperar pelas aulas pra perguntar ao stor)
+
+5.
+    a
+
+6.
+    (anexo)
+    a
+
+7.
+    (anexo)
