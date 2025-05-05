@@ -1,0 +1,12 @@
+1.
+    RAM de 16 bits, constituida por 2 unidades de memória onde 1 é parte alta e outra é parte baixa, e como ambas têm o sinal de OE (RD) e WE (WRh e WRl) indica que é uma RAM.
+    Adicionalmente, 
+    (melhorar)
+
+2.
+    1 porto de entrada, 8 bits, 1 byte, modo de acesso é um ciclo de leitura
+    1 porto de saída, 8 bits, 1 byte, modo de acesso é um ciclo de escrita
+    (melhorar)
+
+3.
+    
