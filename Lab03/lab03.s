@@ -65,23 +65,27 @@ outport_write:
 	mov	pc, lr
 
 ; Rotina:    sleep
-; Descricao: *** Para completar ***
-; Entradas:  *** Para completar ***
+; Descricao: Verifica inicialmente se r0 = 0 por meio de um AND consigo mesmo. Se r0 = 0, pula para sleep_end;
+;			 Se r0 != 0 , inicia r1 com o valor 0x033E,
+;			 em seguida r1 é decrementado por 1, esse loop para quando r1 = 0
+; 			 por sua vez é decrementado por 1 o valor de r0, e se r0 != 0 é efetuado um salto para sleep_outer_loop,
+;			 este processo repetce até que r0 = 0 
+; Entradas:  r0 (r1?)
 ; Saidas:    *** Para completar ***
 ; Efeitos:   *** Para completar ***
 sleep:
-	and	r0, r0, r0
-	beq	sleep_end
+	and	r0, r0, r0	; r0 = r0 && r0
+	beq	sleep_end 	; if 0 sleep_end else sleep_outer_loop
 sleep_outer_loop:
 	mov	r1, #0x3E
-	movt	r1, #0x03
+	movt r1, #0x03	; r1 = 033E (830)
 sleep_inner_loop:
-	sub	r1, r1, #1
-	bne	sleep_inner_loop
-	sub	r0, r0, #1
-	bne	sleep_outer_loop
+	sub	r1, r1, #1	; r1 = r1 - 1
+	bne	sleep_inner_loop	; if !=0 sleep_inner_loop else continue
+	sub	r0, r0, #1	; r0 = r0 - 1
+	bne	sleep_outer_loop	; if !=0 sleep_outer_loop else sleep_end
 sleep_end:
-	mov	pc, lr
+	mov	pc, lr	; retorna
 
 ; Seccao:    data
 ; Descricao: Guarda as variáveis globais
