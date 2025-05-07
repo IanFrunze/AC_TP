@@ -11,8 +11,8 @@
 	.equ	ALL_ONES, 0xFFFF              ; Palavra com todos os bits a 1
 	.equ	ALL_ZEROS, 0x0000             ; Palavra com todos os bits a 0
 
-;	.equ	INPORT_ADDRESS, 0xFF80        ; *Justificar Resposta*
-;	.equ	OUTPORT_ADDRESS, 0xFFC0      ; *Justificar Resposta*
+	.equ	INPORT_ADDRESS, 0xFF80        ; *Justificar Resposta*
+	.equ	OUTPORT_ADDRESS, 0xFFC0      ; *Justificar Resposta*
 
 ; Seccao:    text
 ; Descricao: Guarda o código do programa
@@ -59,20 +59,22 @@ inport_read:
 ; Saidas:    -
 ; Efeitos:   r1 - *** Para completar ***
 outport_write:
-	mov	r1, OUTPORT_ADDRESS & 0xFF
-	movt	r1, (OUTPORT_ADDRESS >> 8) & 0xFF
-	strb	r0, [r1, #0]
+	mov	r1, OUTPORT_ADDRESS & 0xFF ; FFC0 & 00FF = C0
+	movt	r1, (OUTPORT_ADDRESS >> 8) & 0xFF ; FF 			r1 = FFC0
+	strb	r0, [r1, #0] 
 	mov	pc, lr
 
 ; Rotina:    sleep
-; Descricao: Verifica inicialmente se r0 = 0 por meio de um AND consigo mesmo. Se r0 = 0, pula para sleep_end;
-;			 Se r0 != 0 , inicia r1 com o valor 0x033E,
-;			 em seguida r1 é decrementado por 1, esse loop para quando r1 = 0
-; 			 por sua vez é decrementado por 1 o valor de r0, e se r0 != 0 é efetuado um salto para sleep_outer_loop,
-;			 este processo repetce até que r0 = 0 
-; Entradas:  r0 (r1?)
-; Saidas:    *** Para completar ***
-; Efeitos:   *** Para completar ***
+; Descricao: Verifica inicialmente se r0 = 0 por meio de um AND consigo mesmo;
+;			 Se r0 = 0, efetua um salto para sleep_end;
+;			 Se r0 != 0 , inicia r1 com o valor 0x033E (830 em DEC);
+;			 Em seguida é iniciado um loop onde r1 vai ser decrementado por 1, até r1 = 0;
+; 			 Por sua vez, r0 é decrementado por 1, e se r0 != 0 é efetuado um salto para sleep_outer_loop, assim repetindo-se os processos anteriores até r0 = 0,
+;			 onde a rotina acaba.
+;			 Em suma, esta rotina comporta-se como um loop dentro de outro loop, dando ao programa o efeito de, como sugere o nome, sleep. 
+; Entradas:  r0
+; Saidas:    void
+; Efeitos:   Altera os registos r0 e r1. Não utiliza variáveis globais, nem portos.
 sleep:
 	and	r0, r0, r0	; r0 = r0 && r0
 	beq	sleep_end 	; if 0 sleep_end else sleep_outer_loop
