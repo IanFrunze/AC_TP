@@ -1,5 +1,5 @@
-    .equ    OUTPORT_ADDR, 0xF800 ; addr do config do stor, alterar depois 
-    .equ    INPORT_ADDR, 0xFC00 ; addr do config do stor, alterar depois
+    .equ    OUTPORT_ADDR, 0xAFFF
+    .equ    INPORT_ADDR, 0xA000
     .equ    FRIST_3_BITS, 0x7
 
     .text
@@ -15,15 +15,16 @@ main_loop:
     bl      outport_write
     b       main_loop
 
+    ; Lê o que está no porto de entrada, e recebe uma word em r0.
 inport_read:
     ldr     r0, inport_addr
     ldr     r0, [r0]
     mov     pc, lr
 
-;recebe uma valor no registo r0, e controi um byte 
-;em que o bit com indice r0 fica a 0 e tudos os outros bits ficam a 1
+    ; Recebe uma valor no registo r0, e constroi um byte 
+    ; em que o bit com indice r0 fica a 0 e todos os outros bits ficam a 1.
 construct_out:
-    ;r1 = 1 -> 0000 0001
+    ; r1 = 1 -> 0000 0001
     mov     r1, #1
 loop_init:
     b       loop_cond
@@ -37,10 +38,10 @@ loop_cond:
     eor     r0, r1, r0
     mov     pc, lr
 
-;recebe em r0 um byte, e escreve o que está em r0 no porto de saída
+    ; Recebe em r0 um byte, e escreve o que está em r0 no porto de saída
 outport_write:
     ldr     r1, outport_addr
-    strb    r0, [r1,#1]
+    strb    r0, [r1, #0]
     mov     pc, lr
 
 inport_addr:
