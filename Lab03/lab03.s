@@ -29,8 +29,8 @@ stack_top_addr:
 
 ; Rotina:    main
 ; Descricao: *** Para completar ***
-; Entradas:  *** Para completar ***
-; Saidas:    *** Para completar ***
+; Entradas: r0
+; Saidas: void
 ; Efeitos:   *** Para completar ***
 main:
 	mov	r0, #ALL_ONES & 0xFF
@@ -48,8 +48,8 @@ loop:
 ; Saidas:    r0 - *** Para completar ***
 ; Efeitos:   r1 - *** Para completar ***
 inport_read:
-	mov	r1, INPORT_ADDRESS & 0xFF
-	movt	r1, (INPORT_ADDRESS >> 8) & 0xFF
+	mov	r1, #INPORT_ADDRESS & 0xFF
+	movt	r1, #(INPORT_ADDRESS >> 8) & 0xFF
 	ldrb	r0, [r1, #0]
 	mov	pc, lr
 
@@ -59,10 +59,20 @@ inport_read:
 ; Saidas:    -
 ; Efeitos:   r1 - *** Para completar ***
 outport_write:
-	mov	r1, OUTPORT_ADDRESS & 0xFF ; FFC0 & 00FF = C0
-	movt	r1, (OUTPORT_ADDRESS >> 8) & 0xFF ; FF 			r1 = FFC0
+	mov	r1, #OUTPORT_ADDRESS & 0xFF ; FFC0 & 00FF = C0
+	movt	r1, #(OUTPORT_ADDRESS >> 8) & 0xFF ; FF 			r1 = FFC0
 	strb	r0, [r1, #0] 
 	mov	pc, lr
+
+if_0:
+	mov r0, #ALL_ZEROS
+	b if_cond
+if_cond:
+	mov r3, #1
+	and r3, r0, r3
+	beq if_0
+
+
 
 ; Rotina:    sleep
 ; Descricao: Verifica inicialmente se r0 = 0 por meio de um AND consigo mesmo;

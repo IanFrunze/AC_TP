@@ -8,17 +8,3 @@
     1 porto de saída, 8 bits, 1 byte, modo de acesso é um ciclo de escrita
     (melhorar)
 
-3.
-    (anexo)
-
-4.
-    (anexo)
-
-5.
-    ()
-
-6.
-    (anexo)
-
-7.
-    (anexo)

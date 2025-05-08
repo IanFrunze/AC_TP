@@ -1,25 +1,28 @@
 1.
-    (O que é que quer dizer com interdita?)
+    A afirmação "A zona compreendida entre os endereços 7000 e 7FFF é interdita." é falsa, pois essa zona encontra-se em Fold-Back para os módulos #3 INPORT e #4 OUTPORT, onde é possível Ler no módulo #3 e Escrever no módulo #4, dentro dessa mesma zona de endereços.
 
 2.
     1FFF - 0000 + 1 = 2000
     9FFF - 8000 + 1 = 2000
     2000 + 2000 = 4000 = 16KB
-    Como a RAM se localiza em 2 mapas de enderençamento diferentes, ou seja, representam os mesmos dados. Então na verdade só existe 8KB.
 
+    Apesar de a RAM ter apenas 8KB utilizáveis, existem 16KB de RAM acessíveis, pois encontram-se em Fold-Back.
 
 3.
-    (esperar pelas aulas pra perguntar ao stor)
+    (anexo)
 
 4.
-    (esperar pelas aulas pra perguntar ao stor)
+    (anexo)
 
 5.
-    a
+    ()
 
 6.
     (anexo)
-    a
+
+    1º- Conforme dita no enunciado, não é permitido haver a existência de Fold-Back para os módulos de memórias, logo a ROM deste mapa de endereçamento passa a ser de 16KB, e adicionalmente, para assegurar a execução do programa imediatamente após a ligação da energia elétrica, atribui-se a zona de endereços ao módulo #2 ROM de 0000 a 3FFF.
+    2º- Para acrescentar 16KB de RAM aos pré-existentes 8KB, e respeitar a condição de "utilizar gamas de endereços contíguas para localizar os módulos de memória do mesmo tipo", foi atribuído a zona de endereços 4000 a 7FFF para a nova RAM e 8000 a 9FFF para a RAM pré-existente.
+    3º- De forma a concretizar o ponto anterior, foi alterada a zona de endereçamento dos módulos #3 INPORT e #4 OUTPORT para utilizarem os endereços de A000 a AFFF, e por sua vez, assim restando 20KB de memória livre.
 
 7.
     (anexo)
