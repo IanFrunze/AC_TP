@@ -1,0 +1,52 @@
+1.
+    0x10
+
+2.
+    Para que o programa possa dar resposta a pedidos de interrupção externa, uma das condições necessárias para isso acontecer 
+    é garantir que o P16 está disponível para receber pedidos de interrupção externa. Para isso, é preciso alterar o valor da 
+    Flag I (Interrupt Enable), localizada no bit 4 do registo CPSR, para '1', pois esse é o valor que habilita o atendimento a 
+    interrupções, enquanto que o valor '0' desabilita o atendimento a interrupções.
+
+3.
+    O troço de código compreendido entre as linhas 24 e 32 do ficheiro lab04_ex1.s localiza-se na secção .text, 
+    a primeira secção do ficheiro. O compilador do P16 (p16as) executa primeiramente a instrução localizada no 
+    endereço de memória 0x0000, caso nenhum parâmetro seja definido, assim, a primeira instrução a ser executada é "b program", 
+    um branch incondicional para o programa. Ora, como a arquitetura do processador P16 é Von-Neumann, o espaço de endereçamento 
+    de dados é o mesmo que o de endereçamento de código, e por sua vez, o PC (Program Counter) aponta para a próxima instrução 
+    a ser executada, e como cada instrução ocupa 2 bytes (1 word), o troço de código em questão apenas começa no endereço 0x0002.
+
+4.
+    O programa implementado no ficheiro lab04_ex1.s tem como propósito demonstrar a funcionalidade do sistema de interrupções 
+    externas do P16. No início do programa, o mesmo escreve no porto de saída o número de vezes que o processador foi 
+    interrompido externamente, ou seja, '0'. Esse mesmo número é guardado numa variável global de 8 bits (1 byte) denominada 
+    var (uint8_t var), e é atualizada constantemente pois o programa fica num ciclo infinito, até ser interrompido externamente. 
+    Sempre que acontece um pedido de interrupção externo, ou seja a variável nINT_EXT = '0', o programa vai incrementar a variável 
+    var por 1. Assim, é possível observar em tempo real, o processo do P16 perante um pedido de interrupção externa.
+
+5.
+    O circuito Falling Edge Detector (FED) é um circuito lógico sequencial que permite detectar a transição de '1' lógico para '0' lógico.
+
+6.
+    Existem 2 alterações introduzidas no ficheiro lab04_ex2.s relativamente ao programa implementado no ficheiro lab04_ex1.s:
+    1- Modularização da rotina de interrupção: O código de resposta à interrupção foi reorganizado em uma rotina separada 
+    chamada isr. Isso facilita a reutilização, manutenção e legibilidade. A interrupção externa agora redireciona para essa 
+    rotina via instrução de salto no vetor apropriado.
+    2- Reposição do sinal de saída do circuito FED: Após tratar a interrupção, o código limpa o pedido de interrupção do circuito 
+    Falling Edge Detector (FED), restaurando o sinal nINT ao nível lógico 1 por meio da entrada nCLR. Isso é essencial para que o
+    sistema possa reconhecer futuras interrupções, evitando bloqueios após a primeira interrupção.
+
+7.
+    nCS_EXT1
+
+8.
+    Como o endereço associado ao .equ FED_ADDRESS é 0xFF40, o correspondente no mapa de endereçamento do P16 é o sinal nCS_EXT1, 
+    cujo range de endereços é de 0xFF40 a 0xFF7F.
+
+9.
+    nWRL
+
+10.
+    Como a entrada 'nCLR' do circuito FED comporta-se com um dos sinais para a funcionalidade do FFD (Flip-Flop, Tipo D), 
+    esta mesma entrada tem de ter o valor '1' lógico ao mesmo tempo que o sinal 'nCS'. Como o sinal 'nCS' trabalha com um 
+    endereço par, proveniente do range de endereços onde se localiza o FED_ADDRESS, o sinal nWRL do P16 ativa-se ao mesmo tempo. 
+    Assim, é possível usar este mesmo sinal como entrada na porta lógica AND do circuito FED.
