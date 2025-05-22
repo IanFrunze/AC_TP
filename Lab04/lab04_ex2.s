@@ -43,13 +43,13 @@ main:
 	ldr	r1, var_addr_main
 	strb	r0, [r1, #0]
 	bl	outport_write
-	mov	r0, #FED_ADDRESS & 0xFF
+	mov		r0, #FED_ADDRESS & 0xFF
 	movt	r0, #(FED_ADDRESS >> 8) & 0xFF
 	strb	r0, [r0, #0]
-	mrs	r0, cpsr
-	mov	r1, #ENABLE_EXTINT
-	orr	r0, r0, r1
-	msr	cpsr, r0
+	mrs		r0, cpsr
+	mov		r1, #ENABLE_EXTINT
+	orr		r0, r0, r1
+	msr		cpsr, r0
 main_loop:
 	ldr	r0, var_addr_main
 	ldrb	r0, [r0, #0]
