@@ -53,42 +53,59 @@ main:
 	orr 	r0, r0, r1
 	msr 	cpsr, r0
 main_loop:
-	b 		inport_read
-	b		roll_check
-	b 		sides_read
-;	b		random_face
-;	b		outport_write
-;	b		main
+	;r4 -> ultimo dado alterado
+	;r5 -> dado escolhido
+	;r6 -> porto de entrada
+	;r7 -> face atual
+	bl 		inport_read
+	mov 	r6, r0
+	mov 	r1, #SIDES_MASK
+	and 	r0, r6, r1
+	lsr 	r5, r0, #SIDES_POS
+	and 	r0, r5, r4 ; compara o dado lido com o último dado alterado
+	bzs		end_if ; Se forem iguais, ou seja o dado não mudou, não faz nada
+if:
+	mov		r4, r5
+	mov		r0, r4
+	;é enviado o indice na lista die do dado novo escolhido em r0
+	bl		select_die
+	;bl		random_face; calcula a face 
+	mov		r7, r0	
+end_if:
+	mov		r0, r7
+	bl		outport_write
+	bl		roll_check
+
 
 ; função folha
 ; lê e retorna o porto de entrada em r0
 inport_read:
-	ldr		r0, #INPORT_ADDRESS
-	ldrb 	r0, [r0, #0]
-	mov		pc, lr
+	mov		r1, #INPORT_ADDRESS & 0xFF
+	movt	r1, #(INPORT_ADDRESS >> 8) & 0xFF
+	ldrb	r0, [r1, #0]
+	mov	pc, lr
+
 
 ; função folha
 ; Verifica se o roll é 0, caso seja, usa esse sinal diretamente para ativar o FED, e por sua vez a rotina de interrupção
 roll_check:
 	mov 	r1, #ROLL_MASK
 	and 	r0, r0, r1
-	mov 	r1, #FED_ADDRESS
+	mov		r1, #INPORT_ADDRESS & 0xFF
+	movt	r1, #(INPORT_ADDRESS >> 8) & 0xFF
 	str		r0, [r1, #0]
 	mov		pc, lr
 
 ; função folha
 ; recebe r0 (porto de entrada) como parâmetro
-sides_read:
-	mov 	r1, #SIDES_MASK
-	and 	r0, r0, r1
-	lsr 	r0, r0, #SIDES_POS
-	ldr 	r1, die_sides_addr
+select_die:
+	ldr 	r1, die_addr
 	ldrb 	r0, [r1, r0]
 	mov 	pc, lr
-; retorna com o número de lados em r0
+; retorna o endereço do dado selecionado
 
-die_sides_addr:
-	.word	die_sides
+die_addr:
+	.word	die
 
 seg7_values_addr:
 	.word	seg7_values
@@ -114,11 +131,11 @@ interrupt_routine: ; Faz efeito luminoso (2s, 1s por spin) e mostra a face que c
 	movs	pc, lr
 
 	.data
-die_sides:
-	.byte 	0x04 ; 4 lados 
-	.byte 	0x06 ; 6 lados
-	.byte 	0x08 ; 8 lados
-	.byte 	0x0C ; 12 lados
+die:
+	.byte 	die_4 ; 4 lados 
+	.byte 	die_6 ; 6 lados
+	.byte 	die_8 ; 8 lados
+	.byte 	die_12 ; 12 lados
 
 ; Dado 4 faces = {2,4,6,8} (Pares)
 die_4:
