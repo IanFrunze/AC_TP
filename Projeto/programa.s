@@ -80,17 +80,14 @@ roll_check:
 	mov		pc, lr
 
 ; recebe r0 (porto de entrada) como parâmetro
-sides_read:
-	mov 	r1, #SIDES_MASK
-	and 	r0, r0, r1
-	lsr 	r0, r0, #SIDES_POS
-	ldr 	r1, die_sides_addr
+select_die:
+	ldr 	r1, die_addr
 	ldrb 	r0, [r1, r0]
 	mov 	pc, lr
 ; retorna com o número de lados em r0 e r4
 
-die_sides_addr:
-	.word	die_sides
+die_addr:
+	.word	die
 
 seg7_values_addr:
 	.word	seg7_values
