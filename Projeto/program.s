@@ -48,6 +48,7 @@ stack_top_addr:
 
 
 main:
+	b 		lobby
 ;=================================== lobby ===================================;
 ;fase inicial antes de iniciar o jogo
 ;fase de seleção de dados
@@ -63,7 +64,7 @@ lobby:
 lobby_loop:
 	;r4 -> ultimo dado alterado, 
 	;r5 -> dado escolhido
-	;r4 e r5 guardam mais expecificamente o endereço da lista do dado
+	;r4 e r5 guardam mais expecificamente o primeiro elemen
 	;r6 -> porto de entrada
 	;r7 -> face atual
 	;r8 -> last roll
@@ -84,13 +85,13 @@ if_lobby:
 	;se o dado foi alterado 
 	;atualiza o dado escolhido
 	mov		r4, r5
-	;calcula um indice válido, de uma face aleatoria do dado escolhido
+	;calcula uma face aleatória do dado selecionado
 	mov		r0, r4
 	bl		random_face
 	mov		r7, r0
 	sub		r7, r7, #1  
 end_if_lobby:
-	;escreve no porto de saída a face correspondente ao indice presente em r7
+	;escreve no porto de saída a face gerada
 	mov		r0, #seg7_values_addr
 	ldr		r0, [r0]
 	ldrb	r0, [r0,r7]
@@ -125,9 +126,9 @@ game:
 	lsr 	r0, r0, #SIDES_POS
 	;busca o tamanho do dado rolado
 	bl		select_die
-	;calcula um indice de 0..tamanho do dado, aleatoriamente
+	;calcula uma face aleatoria
 	bl		random_face
-	;obtem a face correspondenete ao índice calculado
+	;obtem a código para mostrar no display de 7segmentos a face gerada
 	mov		r7, r0
 	sub		r7, r7, #1  
 	mov		r0, #seg7_values_addr
@@ -193,9 +194,9 @@ var_addr_game:
 
 ;---------------------------------------------------------------------------------;
 ;---------------------------------- Random_face ----------------------------------;
-; 	Description: calcula um indice de 0..tamanho do dado, aleatoriamente
+; 	Description: calcula uma face, aleatoriamente
 ; 	Parametros:  r0 - o endereço do dado desejado
-; 	Retorna:   	 r0 - Um indice aleatorio da lista do endereço do dado recebido
+; 	Retorna:   	 r0 - Uma face aleatoria do dado recebido
 random_face:
 	push	lr
 	push	r4
@@ -248,6 +249,8 @@ select_die:
 	mov		r3, #2
 	b 		loop_calcule_index_cond
 	;calcula o indice na lista dos dados existente, o dado selecionado
+	;é necessário pois esta lista é formada por words, ou seja de 2 em 2,
+	;o que fazemos é múltiplicar por 2 o dado selecionado
 loop_calcule_index:
 	add		r2, r2, r3
 	sub		r0, r0, #1
