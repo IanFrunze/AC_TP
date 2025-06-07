@@ -15,13 +15,15 @@
 	.equ	RAND_MAX_L, 0xFFFF		; Corresponde ao maior valor inteiro
 	.equ	RAND_MAX_H, 0xFFFF		; sem sinal codificavel com 32 bits
 
-
+	.equ	TIME_LAP, 0x01
+	.equ	LAPS, 0x03
 	.equ	N, 5
 
 	.equ	ENABLE_INTERRUPT, 0x10 ; --------00 0(M) 1(I) 0(N) 0(V) 0(C) 0(Z) , Mete a Flag I (Interrupt Enable) a 1 e a Flag M (Mode) a 0
+	.equ	DISABLE_INTERRUPT, 0xEF
 
     .equ    INPORT_ADDRESS, 0xFF80; Endereco do porto de entrada
-	.equ	OUTPORT_ADDRESS, 0xFFC1 ; Endereco do porto de saida
+	.equ	OUTPORT_ADDRESS, 0xFFC0 ; Endereco do porto de saida
 
 	.equ 	SIDES_MASK, 0x0C ; Máscara para os bits que controlam lados do dado
 	.equ 	SIDES_POS, 0x02 ; Quantidade de right-shifts
@@ -29,8 +31,9 @@
 	.equ 	ROLL_MASK, 0x01 ; Máscara para o bits de controlo do roll
 
 	.equ 	FED_ADDRESS, 0xFF40
-	.equ    SIZE_ANIMATION_SEQ, 5 ; Tamanho da sequencia de animação
+	.equ    SIZE_ANIMATION_SEQ, 6 ; Tamanho da sequencia de animação
 
+	.equ	FRAME_TIME, 0x02
 ;	.equ	VAR_INIT_VAL, 0               ; Valor inicial de var
 
 ; Secção:    text
@@ -56,13 +59,15 @@ lobby:
 	bl		select_die
 	mov		r5, r0
 	bl 		inport_read
-	mov 	r6, r0
+	mov 	r1, #ROLL_MASK
+	and 	r8, r1, r0 
 	b 		if_lobby
 lobby_loop:
 	;r4 -> indice ultimo dado alterado
 	;r5 -> indice dado escolhido
 	;r6 -> porto de entrada
 	;r7 -> face atual
+	;r8 -> last roll
 	bl 		inport_read
 	mov 	r6, r0
 	;retira o dado do porto de saída
@@ -77,29 +82,96 @@ if_lobby_cond:
 if_lobby: 
 	;atualiza o dado escolhido
 	mov		r4, r5
+	mov		r10, r4
 	mov		r0, r4
 	bl		random_face
 	mov		r7, r0
+	sub		r7, r7, #1  
 end_if_lobby:
-	mov		r0, r7
+	mov		r0, #seg7_values_addr
+	ldr		r0, [r0]
+	ldrb	r0, [r0,r7]
 	bl		outport_write
 roll_check:
 	mov 	r1, #ROLL_MASK
-	and 	r0, r6, r1
-	mov		r1, #1
+	and		r0, r6, r1
+	mov		r1, r8
 	cmp		r0, r1
+	beq		lobby_lopp_end
+	mov		r1, #0
+	cmp		r0, r1
+	bne		lobby_lopp_end
 	beq		game
+lobby_lopp_end:
+	mov		r8, r0
 	b 		lobby_loop
 game:
-	bl 		animation
-	mov		r0, r4
-	bl		random_face
-	bl		outport_write
+	bl		inport_read
 
+	mov 	r1, #SIDES_MASK
+	and 	r0, r0, r1
+	lsr 	r0, r0, #SIDES_POS
+	bl		select_die
+
+	bl		random_face
+	mov		r7, r0
+	sub		r7, r7, #1  
+	mov		r0, #seg7_values_addr
+	ldr		r0, [r0]
+	ldrb	r4, [r0,r7]
+
+	mov		r0, #LAPS
+	mov		r1, #TIME_LAP
+	bl 		animation
+
+	mov		r0, r4
+	bl		outport_write
+	mov		r1, #0
+	ldr		r0, var_addr_game
+    ldr    r0, [r0]
+	strb		r1, [r0]
+; 	Diz ao CPU que está pronto para interrupções, ou seja,
+;	para incrementar a variável var por 1.
+	mrs		r0, cpsr
+	mov		r5, #ENABLE_INTERRUPT
+	orr		r0, r0, r5
+	msr		cpsr, r0
+wait_10:
+
+	ldr		r0, var_addr_game
+    ldrb    r0, [r0]
+	mov		r1, #120
+
+	cmp		r0, r1
+	blo		wait_10
+
+	mrs		r0, cpsr
+	mov		r5, #ENABLE_INTERRUPT
+	eor		r0, r0, r5 ; desabilita o precessador de aceitar interrupção
+	msr		cpsr, r0
+wait_check_off:
+	bl 		inport_read
+	mov 	r6, r0
+	mov 	r0, #ROLL_MASK
+	and 	r0, r6, r0
+	bzs		wait_check_off
+wait_new_roll:
+	bl 		inport_read
+	mov 	r6, r0
+	mov 	r0, #ROLL_MASK
+	and 	r0, r6, r0
+	bzc		wait_new_roll
+	b		game
+seg7_values_addr:
+	.word	seg7_values
+
+var_addr_game:
+	.word	var
 random_face:
 	;r0 -> o endereço do dado desejado
 	; retorna a face gerada
 	push	lr
+	push	r4
 
 	mov		r1, r0
 	ldrb	r0, [r1, #0]
@@ -109,107 +181,30 @@ random_face:
 	add		r2, r0, #1
 	ldrb	r0,[r1,r2]
 ; retorna
+	pop		r4
 	pop		pc
 
 isr:
+	push	r2
 	push	r1
 	push	r0
-	mov	r0, #FED_ADDRESS & 0xFF
-	movt	r0, #(FED_ADDRESS >> 8) & 0xFF
-	strb	r2, [r0, #0]
+
 	ldr	r0, var_addr_isr
 	ldrb	r1, [r0, #0]
 	add	r1, r1, #1
 	strb	r1, [r0, #0]
+
+	mov		r0, #FED_ADDRESS & 0xFF
+	movt	r0, #(FED_ADDRESS >> 8) & 0xFF
+	strb	r0, [r0, #0]
+
 	pop	r0
 	pop	r1
+	pop	r2
 	movs	pc, lr
 
 var_addr_isr:
 	.word	var
-
-;parametro -> r0 => número de voltas feitas durante a animação 
-;parrametro -> r1 => tempo a dar uma volta completa
-animation:
-	push	lr
-	push	r4
-	push	r5
-    push    r6
-
-	mov		r4, r0
-
-	mov		r0, #0xA6
-	movt 	r0, #0x00	; 1000 dividir por 6 = 166 (0xA6)
-    bl      calculate_time
-    mov     r2, r0
-	and		r4, r4, r4
-	beq		sleep_end 	; if 0 sleep_end else sleep_outer_loop
-sleep_outer_loop:
-	mov		r3, #SIZE_ANIMATION_SEQ
-sleep_inner_loop:
-;	Diz ao CPU que não deve estar mais disposto a interrupções.
-	mrs		r0, cpsr
-	mov		r1, #ENABLE_INTERRUPT
-	eor		r0, r0, r1
-	msr		cpsr, r0
-;	mete var a 0
-	mov		r5, #0
-	ldr		r0, var_addr_animation
-	strb	r5, [r0]
-frame_animation:
-	ldr 	r0, animation_seq_addr
-	ldr		r0, [r0]
-	ldrb	r0, [r0, r3]
-	push	r1
-	push	r2
-	push	r3
-	bl		outport_write
-	pop		r3
-	pop		r2
-	pop		r1
-; 	Diz ao CPU que está pronto para interrupções, ou seja,
-;	para incrementar a variável var por 1.
-	mrs		r0, cpsr
-	mov		r1, #ENABLE_INTERRUPT
-	orr		r0, r0, r1
-	msr		cpsr, r0
-	b 		wait_FED
-wait_frame_time:
-	mov		r5,r0
-wait_FED:
-	mov		r0, #var_addr_animation
-    ldrb    r0, [r0]
-	cmp		r5, r0
-    beq     wait_FED  
-    cmp     r5, r2
-	blo		wait_frame_time
-	sub		r3, r3, #1
-	bzc		sleep_inner_loop
-frame_animation_end:
-	sub		r4, r4, #1	; número de voltas totais
-	bzc		sleep_outer_loop	; if !=0 sleep_outer_loop else sleep_end
-sleep_end:
-    pop     r6     
-	pop		r5
-	pop		r4
-	pop		pc	; retorna
-
-var_addr_animation:
-	.word	var
-
-;r2 -> por quanto quer multiplicar
-;r0 e r1 -> os valores que serão multiplicados por r2
-calculate_time:
-	mov		r3, r0
-	b		calculate_loop_cond
-calculate_loop:
-	add		r0, r0, r3
-calculate_loop_cond:
-	sub		r2, r2, #1
-	bne		calculate_loop
-return:
-	mov		pc, lr
-
 
 ; função folha
 ; recebe r0 o indice do dado a ser escolhido como parâmetro
@@ -230,6 +225,76 @@ loop_calcule_index_cond:
 
 die_addr:
 	.word	die
+	
+;parametro -> r0 => número de voltas feitas durante a animação 
+;parrametro -> r1 => tempo a dar uma volta completa
+animation:
+	push	lr
+	push	r4
+	push	r5
+    push    r6
+	; r4 - número de voltas feitas durante a animação
+	; r1 - tempo de uma volta completa
+	; r3 - tamanho da animação
+	mov		r4, r0 
+
+	and		r4, r4, r4
+	beq		sleep_end 	; if 0 sleep_end else sleep_outer_loop
+sleep_outer_loop:
+	mov		r3, #SIZE_ANIMATION_SEQ
+frame_animation:
+	ldr 	r0, animation_seq_addr
+	;ldr		r0, [r0]
+	ldrb	r0, [r0, r3]
+	push	r1
+	push	r2
+	push	r3
+	bl		outport_write
+	pop		r3
+	pop		r2
+	pop		r1
+	and		r3,r3,r3
+	bzc		wait_frame_time
+	b 		sleep_end
+wait_frame_time:
+	mov		r2, r1
+	;	mete var a 0
+	mov		r5, #0
+	ldr		r0, var_addr_animation
+	strb	r5, [r0]
+; 	Diz ao CPU que está pronto para interrupções, ou seja,
+;	para incrementar a variável var por 1.
+	mrs		r0, cpsr
+	mov		r5, #ENABLE_INTERRUPT
+	orr		r0, r0, r5
+	msr		cpsr, r0
+wait_FED:
+	ldr		r0, var_addr_animation
+    ldrb    r0, [r0]
+	mov		r5, #FRAME_TIME
+	cmp		r0, r5
+    blo     wait_FED  
+
+	mrs		r0, cpsr
+	mov		r5, #ENABLE_INTERRUPT
+	eor		r0, r0, r5 ; desabilita o precessador de aceitar interrupção
+	msr		cpsr, r0
+
+	sub		r2, r2, #1
+	bzc		wait_frame_time
+	sub		r3, r3, #1
+	bzc		frame_animation
+frame_animation_end:
+	sub		r4, r4, #1	; número de voltas totais
+	bzc		sleep_outer_loop	; if !=0 sleep_outer_loop else sleep_end
+sleep_end:
+    pop     r6     
+	pop		r5
+	pop		r4
+	pop		pc	; retorna
+
+var_addr_animation:
+	.word	var
 
 ; função folha
 ; lê e retorna o porto de entrada em r0
@@ -238,12 +303,6 @@ inport_read:
 	movt	r1, #(INPORT_ADDRESS >> 8) & 0xFF
 	ldrb	r0, [r1, #0]
 	mov	pc, lr
-
-animation_seq_addr:
-	.word animation_seq
-
-seg7_values_addr:
-	.word	seg7_values
 
 
 ; Rotina:    outport_write
@@ -265,6 +324,10 @@ interrupt_routine: ; Faz efeito luminoso (2s, 1s por spin) e mostra a face que c
 
 	pop 	r0
 	movs	pc, lr
+
+
+animation_seq_addr:
+	.word animation_seq
 ; -------------------------------------------------------------------
 ; 							Geração pseudo-aleatorios
 ;--------------------------------------------------------------------
@@ -416,12 +479,12 @@ rand_save_seed:
 	ldr	r2, seed_addr_rand
 	str	r0, [r2, #0]
 	str	r1, [r2, #2]
-	b 		loop_resto_cond
-loop_resto:
+	b 		loop_mod_cond
+loop_mod:
 	sub		r1, r1, r4
-loop_resto_cond:
+loop_mod_cond:
 	cmp		r1, r4
-	bhs		loop_resto
+	bhs		loop_mod
 	mov	r0, r1
     pop r4
 	pop	pc
@@ -477,17 +540,17 @@ die_8:
 die_12:
 	.byte	0x0B ; ultimo indice da lista
 	.byte 	0x01 ; 1
+	.byte 	0x01 ; 1
 	.byte 	0x02 ; 2
 	.byte 	0x02 ; 2
+	.byte 	0x03 ; 3
 	.byte 	0x03 ; 3
 	.byte 	0x04 ; 4
 	.byte 	0x04 ; 4
 	.byte 	0x05 ; 5
+	.byte 	0x05 ; 5
 	.byte 	0x06 ; 6
 	.byte 	0x06 ; 6
-	.byte 	0x07 ; 7
-	.byte 	0x08 ; 8
-	.byte 	0x08 ; 8
     .align 	1
 
 seg7_values:
@@ -503,12 +566,20 @@ seg7_values:
     .align 	1
 
 animation_seq: 
-    .byte     0x21 ; F e A
-    .byte     0x40 ; E e F
-    .byte     0x18 ; D e E
-    .byte     0x0C ; C e D
-    .byte     0x06 ; B e C
-    .byte   0x03 ; A e B
+	.byte	0x00
+	.byte 	0x20 ; F
+	.byte 	0x10 ; E
+	.byte 	0x08 ; D
+	.byte 	0x04 ; C
+	.byte 	0x02 ; B
+	.byte   0x01 ; A
+	.align 1
+    ;.byte     0x21 ; F e A
+    ;.byte     0x40 ; E e F
+    ;.byte     0x18 ; D e E
+    ;.byte     0x0C ; C e D
+    ;.byte     0x06 ; B e C
+    ;.byte   0x03 ; A e B
 
 
 	; Definicao da variavel global do tipo uint32_t com valor inicial 1
